@@ -90,6 +90,7 @@ class ResNet(nn.Module):
             param.requires_grad = arg0
 
     def forward(self, x):
+        x = x.permute(0, 2, 1)
         out = self.block1(x)
         out = self.block2(out)
         out = self.block3(out)

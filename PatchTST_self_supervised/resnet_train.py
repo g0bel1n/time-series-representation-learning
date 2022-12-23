@@ -124,4 +124,6 @@ def train_resnet(args):
 
 if __name__ == "__main__":
 
+    torch.cuda.empty_cache()
+    
     train_resnet(args)

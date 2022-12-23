@@ -27,7 +27,7 @@ class ResNetBlock(nn.Module):
         self.bn3 = nn.BatchNorm2d(out_channels)
 
         self.shortcut = nn.Sequential(
-            [
+            
                 nn.Conv1d(
                     in_channels,
                     out_channels,
@@ -37,7 +37,7 @@ class ResNetBlock(nn.Module):
                     bias=False,
                 ),
                 nn.BatchNorm1d(out_channels),
-            ]
+            
         )
 
     def forward(self, x):

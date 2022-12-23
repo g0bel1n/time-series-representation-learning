@@ -1,18 +1,19 @@
 # train resnet on custom dataset
 import os
+import numpy as np
+import pandas as pd
+import os
 import torch
+from torch import nn
+
 from src.models.resnet import ResNet
-from src.basics import set_device
-from src.learner import Learner
+from src.learner import Learner, transfer_weights
 from src.callback.tracking import *
 from src.callback.patch_mask import *
 from src.callback.transforms import *
 from src.metrics import *
 from src.basics import set_device
 from datautils import *
-
-from datautils import *
-import pandas as pd
 
 
 import argparse

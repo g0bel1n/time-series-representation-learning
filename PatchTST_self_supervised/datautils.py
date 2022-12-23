@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import pandas as pd
 import torch
@@ -10,8 +8,10 @@ from src.data.datamodule import DataLoaders
 from src.data.pred_dataset import *
 
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
-         'traffic', 'illness', 'weather', 'exchange'
+         'traffic', 'illness', 'weather', 'exchange', 'ive'
         ]
+
+base_path = '../data/'
 
 def get_dls(params):
     
@@ -19,7 +19,7 @@ def get_dls(params):
     if not hasattr(params,'use_time_features'): params.use_time_features = False
 
     if params.dset == 'ettm1':
-        root_path = '/data/datasets/public/ETDataset/ETT-small/'
+        root_path = base_path + 'ETT-small/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_ETT_minute,
@@ -37,7 +37,7 @@ def get_dls(params):
 
 
     elif params.dset == 'ettm2':
-        root_path = '/data/datasets/public/ETDataset/ETT-small/'
+        root_path = base_path + 'ETT-small/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_ETT_minute,
@@ -54,7 +54,7 @@ def get_dls(params):
                 )
 
     elif params.dset == 'etth1':
-        root_path = '/data/datasets/public/ETDataset/ETT-small/'
+        root_path = base_path + 'ETT-small/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_ETT_hour,
@@ -72,7 +72,7 @@ def get_dls(params):
 
 
     elif params.dset == 'etth2':
-        root_path = '/data/datasets/public/ETDataset/ETT-small/'
+        root_path = base_path + 'ETT-small/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_ETT_hour,
@@ -90,7 +90,7 @@ def get_dls(params):
     
 
     elif params.dset == 'electricity':
-        root_path = '/data/datasets/public/electricity/'
+        root_path = base_path + 'electricity/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,
@@ -107,7 +107,7 @@ def get_dls(params):
                 )
 
     elif params.dset == 'traffic':
-        root_path = '/data/datasets/public/traffic/'
+        root_path = base_path + 'traffic/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,
@@ -124,7 +124,7 @@ def get_dls(params):
                 )
     
     elif params.dset == 'weather':
-        root_path = '/data/datasets/public/weather/'
+        root_path = base_path + 'weather/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,
@@ -141,7 +141,7 @@ def get_dls(params):
                 )
 
     elif params.dset == 'illness':
-        root_path = '/data/datasets/public/illness/'
+        root_path = base_path + 'illness/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,
@@ -158,7 +158,7 @@ def get_dls(params):
                 )
 
     elif params.dset == 'exchange':
-        root_path = '/data/datasets/public/exchange_rate/'
+        root_path = base_path + 'exchange_rate/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,
@@ -174,7 +174,7 @@ def get_dls(params):
                 workers=params.num_workers,
                 )
     elif params.dset == 'ive':
-        root_path = '../../data/IVE/'   
+        root_path = base_path + 'IVE/'   
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,

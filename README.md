@@ -25,3 +25,9 @@ Code for PatchTST is from https://github.com/yuqinie98/PatchTST.
   - [ ] MDS
   - [ ] Attention Map 
 - [ ] Same for IVE-classification
+
+### Command lines
+
+````
+python patchtst_pretrain.py --dset_pretrain ettm1 --mask_ratio .4 --stride 8 --patch_len 16 --context_points 336 --n_epochs_pretrain 100 --batch_size 128
+```

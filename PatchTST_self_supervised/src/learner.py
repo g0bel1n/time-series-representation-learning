@@ -187,7 +187,6 @@ class Learner(GetAttr):
     def train_step(self, batch):
         # get the inputs
         self.xb, self.yb = batch
-        print(self.xb.shape, self.yb.shape)  # TODO delete
         # forward
         pred = self.model_forward()
         # compute loss

@@ -1,3 +1,4 @@
 *.pth
 data/*
 *.pyc
+*.DS_Store

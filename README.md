@@ -28,6 +28,15 @@ Code for PatchTST is from https://github.com/yuqinie98/PatchTST.
 
 ### Command lines
 
-````
-python patchtst_pretrain.py --dset_pretrain ettm1 --mask_ratio .4 --stride 8 --patch_len 16 --context_points 336 --n_epochs_pretrain 100 --batch_size 128
+for PachTST
+
 ```
+python patchtst_pretrain.py --dset_pretrain ettm1 --mask_ratio .4 --stride 8 --patch_len 16 --context_points 336 --n_epochs_pretrain 100 --batch_size 128
+````
+
+For resnet
+```
+python resnet_train.py --dset ettm1  --context_points 336 --n_epochs 100 --batch_size 256 --lr 0.01
+```
+
+BUILD DATALOADER FOR GUNPOINT

@@ -8,10 +8,10 @@ from src.data.datamodule import DataLoaders
 from src.data.pred_dataset import *
 
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
-         'traffic', 'illness', 'weather', 'exchange', 'ive'
+         'traffic', 'illness', 'weather', 'exchange', 'ive', 'gunpoint'
         ]
 
-base_path = '../data/'
+base_path = 'data/'
 
 def get_dls(params):
     
@@ -190,17 +190,12 @@ def get_dls(params):
                 workers=params.num_workers,
                 )
     elif params.dset == 'gunpoint':
-        root_path = base_path + 'GunPoint/'
+        root_path = base_path + 'gunpoint/'
         size = [150, 0, 1]
         dls = DataLoaders(
                 datasetCls=Dataset_GunPoint,
                 dataset_kwargs={
-                'root_path': root_path,
-                'data_path': 'gunpoint.csv',
-                'features': params.features,
-                'scale': True,
-                'size': size,
-                'use_time_features': params.use_time_features
+                'root_path': root_path
                 },
                 batch_size=params.batch_size,
                 workers=params.num_workers,

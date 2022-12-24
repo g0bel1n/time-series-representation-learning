@@ -19,3 +19,6 @@ def r2_score(y_true, y_pred):
 def mape(y_true, y_pred):
     from sklearn.metrics import mean_absolute_percentage_error
     return mean_absolute_percentage_error(y_true, y_pred)
+
+def bce(y_true, y_pred):
+    return F.binary_cross_entropy_with_logits(y_pred, y_true)

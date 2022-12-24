@@ -187,6 +187,9 @@ class Learner(GetAttr):
     def train_step(self, batch):
         # get the inputs
         self.xb, self.yb = batch
+        if len(self.xb.shape)==2:
+            self.xb = self.xb.unsqueeze(-1)
+            
         # forward
         pred = self.model_forward()
         # compute loss
@@ -207,6 +210,9 @@ class Learner(GetAttr):
         # get the inputs
         self.xb, self.yb = batch
         # forward
+        if len(self.xb.shape)==2:
+            self.xb = self.xb.unsqueeze(-1)
+            
         pred = self.model_forward()
         # compute loss
         loss = self.loss_func(pred, self.yb)
@@ -218,6 +224,9 @@ class Learner(GetAttr):
     def predict_step(self, batch):
         # get the inputs
         self.xb, self.yb = batch
+        if len(self.xb.shape)==2:
+            self.xb = self.xb.unsqueeze(-1)
+            
         # forward
         pred = self.model_forward()
         return pred
@@ -228,6 +237,9 @@ class Learner(GetAttr):
     def test_step(self, batch):
         # get the inputs
         self.xb, self.yb = batch
+        if len(self.xb.shape)==2:
+            self.xb = self.xb.unsqueeze(-1)
+            
         # forward
         pred = self.model_forward()
         return pred, self.yb

@@ -41,9 +41,10 @@ parser.add_argument('--d_model', type=int, default=128, help='Transformer d_mode
 parser.add_argument('--d_ff', type=int, default=256, help='Tranformer MLP dimension')
 parser.add_argument('--dropout', type=float, default=0.2, help='Transformer dropout')
 parser.add_argument('--head_dropout', type=float, default=0, help='head dropout')
+parser.add_argument('--head_type', type=str, default='prediction', help='head type')
 # Optimization args
 parser.add_argument('--n_epochs', type=int, default=20, help='number of training epochs')
-parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+parser.add_argument('--lr', type=float, default=None, help='learning rate')
 # model id to keep track of the number of models saved
 parser.add_argument('--model_id', type=int, default=1, help='id of the saved model')
 parser.add_argument('--model_type', type=str, default='based_model', help='for multivariate model or univariate model')
@@ -80,7 +81,7 @@ def get_model(c_in, args):
                 dropout=args.dropout,
                 head_dropout=args.head_dropout,
                 act='relu',
-                head_type='prediction',
+                head_type=args.head_type,
                 res_attention=False
                 )    
     return model
@@ -89,9 +90,10 @@ def get_model(c_in, args):
 def find_lr():
     # get dataloader
     dls = get_dls(args)    
+    print(dls.vars)
     model = get_model(dls.vars, args)
     # get loss
-    loss_func = torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
     # get callbacks
     cbs = [RevInCB(dls.vars)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
@@ -110,7 +112,7 @@ def train_func(lr=args.lr):
     model = get_model(dls.vars, args)
 
     # get loss
-    loss_func = torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
 
     # get callbacks
     cbs = [RevInCB(dls.vars)] if args.revin else []
@@ -125,7 +127,7 @@ def train_func(lr=args.lr):
                         loss_func, 
                         lr=lr, 
                         cbs=cbs,
-                        metrics=[mse]
+                        metrics=[bce] if args.head_type == 'classification' else [mse,mae]
                         )
                         
     # fit the data to the model
@@ -142,16 +144,16 @@ def test_func():
     cbs = [RevInCB(dls.vars)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
-    out  = learn.test(dls.test, weight_path=weight_path, scores=[mse,mae])         # out: a list of [pred, targ, score_values]
+    out  = learn.test(dls.test, weight_path=weight_path, scores=[bce] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score_values]
     return out
 
 
 if __name__ == '__main__':
 
     if args.is_train:   # training mode
-        suggested_lr = find_lr()
-        print('suggested lr:', suggested_lr)
-        train_func(suggested_lr)
+        lr  = find_lr() if args.lr is None else args.lr
+        print('Used lr:', lr)
+        train_func(lr)
     else:   # testing mode
         out = test_func()
         print('score:', out[2])

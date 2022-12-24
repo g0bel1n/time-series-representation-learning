@@ -485,23 +485,29 @@ class Dataset_Pred(Dataset):
 
 class Dataset_GunPoint(Dataset):
 
-    def __init__(self, root_path, split="train", size=None, features="S", target="OT"):
+    def __init__(self, root_path, split="train"):
         # size [seq_len, label_len, pred_len]
         # info
         # init
-        assert split in ["train", "test"]
+        assert split in ["train", "test", "val"]
+        type_map = {"train": 0, "val": 1, "test": 2}
+        self.set_type = type_map[split]
         self.split = split
-        self.features = features
-        self.target = target
         self.root_path = root_path
         self.__read_data__()
 
     def __read_data__(self):
         
-        df_raw = pd.read_csv(os.path.join(self.root_path, f"GunPoint_{self.split.upper()}.csv"), header=None, sep="\s+")
+        df_raw = pd.read_csv(os.path.join(self.root_path, f"GunPoint_{self.split.upper()}.txt"), header=None, sep="\s+")
+        df_raw = df_raw.astype('float32')
         self.target = 0
         self.data_x = df_raw.drop([self.target], 1).values
-        self.data_y = df_raw[[self.target]].values
+        self.data_y = df_raw[[self.target]].values - 1
+
+    def __len__(self):
+        return len(self.data_x)
+
+    
 
     def __getitem__(self, index):
         #lookback_len = 150

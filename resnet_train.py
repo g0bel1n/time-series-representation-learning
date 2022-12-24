@@ -38,7 +38,7 @@ parser.add_argument(
     help="for multivariate model or univariate model",
 )
 parser.add_argument(
-    "--task", type=str, default="regression", help="regression or classification"
+    "--head_type", type=str, default="regression", help="regression or classification"
 )
 
 
@@ -52,7 +52,7 @@ parser.add_argument("--head_dropout", type=float, default=0.2, help="head dropou
 parser.add_argument(
     "--n_epochs", type=int, default=10, help="number of pre-training epochs"
 )
-parser.add_argument("--lr", type=float, default=1e-4, help="learning rate")
+parser.add_argument("--lr", type=float, default=None, help="learning rate")
 # model id to keep track of the number of models saved
 parser.add_argument(
     "--pretrained_model_id",
@@ -76,8 +76,8 @@ if not os.path.exists(args.save_path):
     os.makedirs(args.save_path)
 
 
-def get_model(in_channels, task, n_classes, head_dropout):
-    model = ResNet(in_channels, task, n_classes, head_dropout)
+def get_model(in_channels, task, len_pred, head_dropout):
+    model = ResNet(in_channels, task, len_pred, head_dropout)
     print(
         "number of model params",
         sum(p.numel() for p in model.parameters() if p.requires_grad),
@@ -90,22 +90,23 @@ set_device()
 def test_func(weight_path):
     # get dataloader
     dls = get_dls(args)
-    model = get_model(dls.vars, args.task, 2, args.head_dropout).to('cuda')
+    model = get_model(dls.vars, args.head_type, args.target_points, args.head_dropout).to('cuda')
     # get callbacks
     cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
     learn = Learner(dls, model,cbs=cbs)
-    out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[mse,mae])         # out: a list of [pred, targ, score]
+    out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[bce] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score]
     print('score:', out[2])
     # save results
-    pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_pretrained_model + '_acc.csv', float_format='%.6f', index=False)
+    #pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_pretrained_model + '_acc.csv', float_format='%.6f', index=False)
     return out
 
 def find_lr():
     # get dataloader
+    args.lr = 1e-4
     dls = get_dls(args)    
-    model = get_model(dls.vars, args.task, 2, args.head_dropout)
+    model = get_model(dls.vars, args.head_type,  args.target_points, args.head_dropout)
     # get loss
-    loss_func = torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
     # get callbacks
     cbs = [RevInCB(dls.vars, denorm=False)] if args.revin else []
         
@@ -124,9 +125,9 @@ def find_lr():
 def train_resnet(args):
     dls = get_dls(args)
     # get model
-    model = get_model(dls.vars, args.task, 2, args.head_dropout)
+    model = get_model(dls.vars, args.head_type,  args.target_points, args.head_dropout)
     # get loss
-    loss_func = torch.nn.MSELoss(reduction="mean")
+    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
 
     cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
 
@@ -142,7 +143,7 @@ def train_resnet(args):
         loss_func,
         lr=args.lr,
         cbs=cbs,
-        metrics=[mse, mae]
+        metrics=[bce] if args.head_type == 'classification' else [mse,mae]
     )
     # fit the data to the model
     learn.fine_tune(n_epochs=args.n_epochs, base_lr=args.lr, freeze_epochs=10)
@@ -161,7 +162,7 @@ def train_resnet(args):
 if __name__ == "__main__":
 
     torch.cuda.empty_cache()
-    suggested_lr = find_lr()
+    suggested_lr = find_lr() if args.lr is None else args.lr
     args.lr = suggested_lr
     train_resnet(args)
     test_func(args.save_path+args.save_pretrained_model)

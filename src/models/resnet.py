@@ -58,9 +58,9 @@ class ResNet(nn.Module):
         self,
         in_channels,
         task: str,
-        num_classes: int,
-        head_dropout: float = 0.2,
-        pred_len : int = 96
+         pred_len : int = 96,
+        head_dropout: float = 0.2
+       
     ):
         out_channels = in_channels
         self.n_channels = in_channels
@@ -76,7 +76,7 @@ class ResNet(nn.Module):
         self.pred_len = pred_len
 
         if task == "classification":
-            self.fc = nn.Linear(128, num_classes*out_channels)
+            self.fc = nn.Linear(128, pred_len)
         elif task == "regression":
             self.fc = nn.Sequential(nn.Linear(128, pred_len), nn.Dropout(head_dropout), nn.Linear(pred_len, pred_len))
         else:
@@ -106,11 +106,15 @@ class ResNet(nn.Module):
             out = self.gap(out)
             out = self.dropout(out)
             out = self.fc(out)
-            chan_cat_out[:, chan, :] = out.squeeze()
+            chan_cat_out[:, chan, :] = out.reshape(-1, 1)
         return chan_cat_out
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
         out = self._one_forward(x)
-        return out.permute(0, 2, 1)
+        out = out.permute(0, 2, 1)
+        if self.pred_len == 1:
+            out = out.squeeze(-1)
+
+        return out
         

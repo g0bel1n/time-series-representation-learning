@@ -62,7 +62,8 @@ class PatchTST(nn.Module):
         z: tensor [bs x num_patch x n_vars x patch_len]
         """   
         z = self.backbone(z)                                                                # z: [bs x nvars x d_model x num_patch]
-        z = self.head(z)                                                                    
+        z = self.head(z)  
+
         # z: [bs x target_dim x nvars] for prediction
         #    [bs x target_dim] for regression
         #    [bs x target_dim] for classification
@@ -96,7 +97,7 @@ class ClassificationHead(nn.Module):
         super().__init__()
         self.flatten = nn.Flatten(start_dim=1)
         self.dropout = nn.Dropout(head_dropout)
-        self.linear = nn.Linear(n_vars*d_model, n_classes)
+        self.linear = nn.Linear(n_vars*d_model, n_classes if n_classes!=2 else 1)
 
     def forward(self, x):
         """
@@ -220,6 +221,7 @@ class PatchTSTEncoder(nn.Module):
         x = x.transpose(1,2)                                                     # x: [bs x nvars x num_patch x d_model]        
 
         u = torch.reshape(x, (bs*n_vars, num_patch, self.d_model) )              # u: [bs * nvars x num_patch x d_model]
+
         u = self.dropout(u + self.W_pos)                                         # u: [bs * nvars x num_patch x d_model]
 
         # Encoder

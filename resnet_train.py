@@ -94,7 +94,7 @@ def test_func(weight_path):
     # get callbacks
     cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
     learn = Learner(dls, model,cbs=cbs)
-    out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[bce] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score]
+    out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[acc] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score]
     print('score:', out[2])
     # save results
     #pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_pretrained_model + '_acc.csv', float_format='%.6f', index=False)
@@ -106,7 +106,7 @@ def find_lr():
     dls = get_dls(args)    
     model = get_model(dls.vars, args.head_type,  args.target_points, args.head_dropout)
     # get loss
-    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
     # get callbacks
     cbs = [RevInCB(dls.vars, denorm=False)] if args.revin else []
         
@@ -127,7 +127,7 @@ def train_resnet(args):
     # get model
     model = get_model(dls.vars, args.head_type,  args.target_points, args.head_dropout)
     # get loss
-    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
 
     cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
 
@@ -143,10 +143,10 @@ def train_resnet(args):
         loss_func,
         lr=args.lr,
         cbs=cbs,
-        metrics=[bce] if args.head_type == 'classification' else [mse,mae]
+        metrics=[acc] if args.head_type == 'classification' else [mse,mae]
     )
     # fit the data to the model
-    learn.fine_tune(n_epochs=args.n_epochs, base_lr=args.lr, freeze_epochs=10)
+    learn.fit_one_cycle(n_epochs=args.n_epochs, lr_max=args.lr, pct_start=0.2)
 
     train_loss = learn.recorder["train_loss"]
     valid_loss = learn.recorder["valid_loss"]

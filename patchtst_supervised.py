@@ -93,7 +93,7 @@ def find_lr():
     print(dls.vars)
     model = get_model(dls.vars, args)
     # get loss
-    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
     # get callbacks
     cbs = [RevInCB(dls.vars)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
@@ -112,7 +112,7 @@ def train_func(lr=args.lr):
     model = get_model(dls.vars, args)
 
     # get loss
-    loss_func = torch.nn.BCEWithLogitsLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
 
     # get callbacks
     cbs = [RevInCB(dls.vars)] if args.revin else []
@@ -127,7 +127,7 @@ def train_func(lr=args.lr):
                         loss_func, 
                         lr=lr, 
                         cbs=cbs,
-                        metrics=[bce] if args.head_type == 'classification' else [mse,mae]
+                        metrics=[ce] if args.head_type == 'classification' else [mse,mae]
                         )
                         
     # fit the data to the model
@@ -144,7 +144,7 @@ def test_func():
     cbs = [RevInCB(dls.vars)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
-    out  = learn.test(dls.test, weight_path=weight_path, scores=[bce] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score_values]
+    out  = learn.test(dls.test, weight_path=weight_path, scores=[ce] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score_values]
     return out
 
 

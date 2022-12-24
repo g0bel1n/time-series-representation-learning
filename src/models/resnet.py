@@ -52,13 +52,21 @@ class ResNetBlock(nn.Module):
         out = F.relu(out)
         return out
 
+class GAP(nn.Module):
+    def __init__(self):
+        super(GAP, self).__init__()
+        self.gap = partial(torch.mean, axis=-1)
+
+    def forward(self, x):
+        return self.gap(x)
+
 
 class ResNet(nn.Module):
     def __init__(
         self,
         in_channels,
         task: str,
-         pred_len : int = 96,
+        pred_len : int = 96,
         head_dropout: float = 0.2
        
     ):
@@ -70,7 +78,7 @@ class ResNet(nn.Module):
         self.block2 = ResNetBlock(64, 128)
         self.block3 = ResNetBlock(128, 128, is_final=True)
 
-        self.gap = partial(torch.mean, axis=-1)
+        self.gap = GAP()
         self.dropout = nn.Dropout(head_dropout)
 
         self.pred_len = pred_len
@@ -81,6 +89,8 @@ class ResNet(nn.Module):
             self.fc = nn.Sequential(nn.Linear(128, pred_len), nn.Dropout(head_dropout), nn.Linear(pred_len, pred_len))
         else:
             raise ValueError("Task should be either classification or regression")
+
+        self.task = task
 
     def freeze(self):
         self._freeznt(False)
@@ -106,15 +116,17 @@ class ResNet(nn.Module):
             out = self.gap(out)
             out = self.dropout(out)
             out = self.fc(out)
-            chan_cat_out[:, chan, :] = out.reshape(-1, 1)
+            chan_cat_out[:, chan, :] = out
         return chan_cat_out
 
     def forward(self, x):
+        print(x.shape)
         x = x.permute(0, 2, 1)
         out = self._one_forward(x)
+        # if self.pred_len == 1:
+        #     out = out.squeeze(-1)
+        if self.task == 'classification':
+            out = F.softmax(out, dim=-1)
         out = out.permute(0, 2, 1)
-        if self.pred_len == 1:
-            out = out.squeeze(-1)
-
         return out
         

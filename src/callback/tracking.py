@@ -149,8 +149,8 @@ class TrackTrainingCB(Callback):
 
         # calculate metrics if available after each epoch
         if len(self.preds) == 0: return values
-        self.preds = torch.cat(self.preds, dim=1) #TODO WARNING
-        self.targs = torch.cat(self.targs, dim=1)        
+        self.preds = torch.cat(self.preds, dim=0) #TODO WARNING
+        self.targs = torch.cat(self.targs, dim=0)        
         for func in self.metrics:             
             # values[func.__name__] = func(self.targs, self.preds)
             values[func.__name__] = func(self.targs, self.preds)        

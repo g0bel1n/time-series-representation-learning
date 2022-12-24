@@ -201,8 +201,12 @@ def get_dls(params):
                 workers=params.num_workers,
                 )
     
+        dls.vars, dls.len = 1, 50
+        dls.c = dls.train.dataset[0][1].shape[0]
+        return dls
+
     # dataset is assume to have dimension len x nvars
-    dls.vars, dls.len = 1, 50
+    dls.vars, dls.len = dls.train.dataset[0][0].shape[1], params.context_points
     dls.c = dls.train.dataset[0][1].shape[0]
     return dls
 

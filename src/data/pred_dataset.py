@@ -502,7 +502,7 @@ class Dataset_GunPoint(Dataset):
         df_raw = df_raw.astype('float32')
         self.target = 0
         self.data_x = df_raw.drop([self.target], 1).values
-        self.data_y = df_raw[[self.target]].values - 1
+        self.data_y = (df_raw[[self.target]].values - 1).astype(int)
 
     def __len__(self):
         return len(self.data_x)

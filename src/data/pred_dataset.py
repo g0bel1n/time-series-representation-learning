@@ -483,5 +483,30 @@ class Dataset_Pred(Dataset):
         return self.scaler.inverse_transform(data)
 
 
+class Dataset_GunPoint(Dataset):
+
+    def __init__(self, root_path, split="train", size=None, features="S", target="OT"):
+        # size [seq_len, label_len, pred_len]
+        # info
+        # init
+        assert split in ["train", "test"]
+        self.split = split
+        self.features = features
+        self.target = target
+        self.root_path = root_path
+        self.__read_data__()
+
+    def __read_data__(self):
+        
+        df_raw = pd.read_csv(os.path.join(self.root_path, f"GunPoint_{self.split.upper()}.csv"), header=None, sep="\s+")
+        self.target = 0
+        self.data_x = df_raw.drop([self.target], 1).values
+        self.data_y = df_raw[[self.target]].values
+
+    def __getitem__(self, index):
+        #lookback_len = 150
+        return self.data_x[index], self.data_y[index]
+
+
 def _torch(*dfs):
     return tuple(torch.from_numpy(x).float() for x in dfs)

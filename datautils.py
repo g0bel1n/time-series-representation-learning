@@ -189,9 +189,25 @@ def get_dls(params):
                 batch_size=params.batch_size,
                 workers=params.num_workers,
                 )
+    elif params.dset == 'gunpoint':
+        root_path = base_path + 'GunPoint/'
+        size = [150, 0, 1]
+        dls = DataLoaders(
+                datasetCls=Dataset_GunPoint,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'gunpoint.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
     
     # dataset is assume to have dimension len x nvars
-    dls.vars, dls.len = dls.train.dataset[0][0].shape[1], params.context_points
+    dls.vars, dls.len = 1, 50
     dls.c = dls.train.dataset[0][1].shape[0]
     return dls
 

@@ -39,4 +39,7 @@ For resnet
 python resnet_train.py --dset ettm1  --context_points 336 --n_epochs 100 --batch_size 256 --lr 0.01
 ```
 
+```
+python resnet_train.py --dset gunpoint --batch_size 8  --head_type classification  --context_points 150 --target_points 2  --revin 0 --n_epochs 20
+```
 BUILD DATALOADER FOR GUNPOINT

@@ -97,7 +97,7 @@ class ClassificationHead(nn.Module):
         super().__init__()
         self.flatten = nn.Flatten(start_dim=1)
         self.dropout = nn.Dropout(head_dropout)
-        self.linear = nn.Linear(n_vars*d_model, n_classes if n_classes!=2 else 1)
+        self.linear = nn.Linear(n_vars*d_model, n_classes)
 
     def forward(self, x):
         """
@@ -108,7 +108,8 @@ class ClassificationHead(nn.Module):
         x = self.flatten(x)         # x: bs x nvars * d_model
         x = self.dropout(x)
         y = self.linear(x)         # y: bs x n_classes
-        return y
+        y = F.softmax(y, dim=-1)
+        return y.unsqueeze(-1)  # y: bs x n_classes x 1 for ce
 
 
 class PredictionHead(nn.Module):

@@ -1,6 +1,6 @@
 from typing import List
 import torch
-from torch.optim import Adam
+from torch.optim import Adam, AdamW
 from torch import nn
 from torch.nn.parallel import DistributedDataParallel
 
@@ -28,7 +28,7 @@ class Learner(GetAttr):
         lr=1e-3,
         cbs=None,
         metrics=None,
-        opt_func=Adam,
+        opt_func=AdamW,
         **kwargs,
     ):
 

@@ -87,6 +87,39 @@ def get_model(in_channels, task, n_classes, head_dropout):
 
 set_device()
 
+def test_func(weight_path):
+    # get dataloader
+    dls = get_dls(args)
+    model = get_model(dls.vars, args.task, 2, args.head_dropout).to('cuda')
+    # get callbacks
+    cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
+    learn = Learner(dls, model,cbs=cbs)
+    out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[mse,mae])         # out: a list of [pred, targ, score]
+    print('score:', out[2])
+    # save results
+    pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_finetuned_model + '_acc.csv', float_format='%.6f', index=False)
+    return out
+
+def find_lr():
+    # get dataloader
+    dls = get_dls(args)    
+    model = get_model(dls.vars, args.task, 2, args.head_dropout)
+    # get loss
+    loss_func = torch.nn.MSELoss(reduction='mean')
+    # get callbacks
+    cbs = [RevInCB(dls.vars, denorm=False)] if args.revin else []
+        
+    # define learner
+    learn = Learner(dls, model, 
+                        loss_func, 
+                        lr=args.lr, 
+                        cbs=cbs,
+                        )                        
+    # fit the data to the model
+    suggested_lr = learn.lr_finder()
+    print('suggested_lr', suggested_lr)
+    return suggested_lr
+
 
 def train_resnet(args):
     dls = get_dls(args)
@@ -95,7 +128,9 @@ def train_resnet(args):
     # get loss
     loss_func = torch.nn.MSELoss(reduction="mean")
 
-    cbs = [
+    cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
+
+    cbs += [
         SaveModelCB(
             monitor="valid_loss", fname=args.save_pretrained_model, path=args.save_path
         )
@@ -107,10 +142,10 @@ def train_resnet(args):
         loss_func,
         lr=args.lr,
         cbs=cbs,
-        # metrics=[mse]
+        metrics=[mse, mae]
     )
     # fit the data to the model
-    learn.fit_one_cycle(n_epochs=args.n_epochs, lr_max=args.lr)
+    learn.fine_tune(n_epochs=args.n_epochs, base_lr=args.lr, freeze_epochs=10)
 
     train_loss = learn.recorder["train_loss"]
     valid_loss = learn.recorder["valid_loss"]
@@ -120,10 +155,13 @@ def train_resnet(args):
         float_format="%.6f",
         index=False,
     )
+  
 
 
 if __name__ == "__main__":
 
     torch.cuda.empty_cache()
-    
+    suggested_lr = find_lr()
+    args.lr = suggested_lr
     train_resnet(args)
+    test_func(args.save_path+args.save_pretrained_model)

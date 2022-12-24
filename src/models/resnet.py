@@ -66,7 +66,7 @@ class ResNet(nn.Module):
         self.n_channels = in_channels
         super(ResNet, self).__init__()
 
-        self.block1 = ResNetBlock(in_channels, 64)
+        self.block1 = ResNetBlock(1, 64)
         self.block2 = ResNetBlock(64, 128)
         self.block3 = ResNetBlock(128, 128, is_final=True)
 
@@ -78,11 +78,11 @@ class ResNet(nn.Module):
         if task == "classification":
             self.fc = nn.Linear(128, num_classes*out_channels)
         elif task == "regression":
-            self.fc = nn.Sequential(nn.Linear(128, out_channels), nn.Dropout(), nn.Linear(out_channels, out_channels))
+            self.fc = nn.Sequential(nn.Linear(128, pred_len), nn.Dropout(head_dropout), nn.Linear(pred_len, pred_len))
         else:
             raise ValueError("Task should be either classification or regression")
 
-    def freeze_but_last(self):
+    def freeze(self):
         self._freeznt(False)
 
     def unfreeze(self):
@@ -98,20 +98,19 @@ class ResNet(nn.Module):
 
 
     def _one_forward(self, x):
-        
-        out = self.block1(x)
-        out = self.block2(out)
-        out = self.block3(out)
-        out = self.gap(out)
-        out = self.dropout(out)
-        out = self.fc(out)
-        return out
+        chan_cat_out = torch.zeros(x.shape[0], x.shape[1], self.pred_len, device='cuda:0')
+        for chan in range(self.n_channels):
+            out = self.block1(x[:, chan, :].unsqueeze(1))
+            out = self.block2(out)
+            out = self.block3(out)
+            out = self.gap(out)
+            out = self.dropout(out)
+            out = self.fc(out)
+            chan_cat_out[:, chan, :] = out.squeeze()
+        return chan_cat_out
 
     def forward(self, x):
         x = x.permute(0, 2, 1)
-        full_out = torch.zeros(x.shape[0], x.shape[1], x.shape[2]+self.pred_len, device='cuda:0')
-        full_out[:, :, :x.shape[2]] = x
-        for i in range(self.pred_len):
-            out = self._one_forward(x[:, :, i:x.shape[2]+i])
-            full_out[:, :, x.shape[2]+i] = out
-        return full_out[:, :, x.shape[2]:].permute(0, 2, 1)
+        out = self._one_forward(x)
+        return out.permute(0, 2, 1)
+        

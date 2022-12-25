@@ -136,6 +136,7 @@ class Dataset_ETT_minute(Dataset):
         timeenc=0,
         freq="t",
         use_time_features=False,
+        classification = None,
     ):
         # size [seq_len, label_len, pred_len]
         # info
@@ -151,7 +152,7 @@ class Dataset_ETT_minute(Dataset):
         assert split in ["train", "test", "val"]
         type_map = {"train": 0, "val": 1, "test": 2}
         self.set_type = type_map[split]
-
+        self.classification = classification
         self.features = features
         self.target = target
         self.scale = scale
@@ -221,9 +222,12 @@ class Dataset_ETT_minute(Dataset):
 
         seq_x = self.data_x[s_begin:s_end]
         seq_y = self.data_y[r_begin:r_end]
+
+        if self.classification is not None:
+            seq_y = np.array(int(seq_y[-1, -1]>= (1+self.classification)*seq_y[0, -1])).reshape((1))
+
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
-
         if self.use_time_features:
             return _torch(seq_x, seq_y, seq_x_mark, seq_y_mark)
         else:
@@ -503,6 +507,7 @@ class Dataset_GunPoint(Dataset):
         self.target = 0
         self.data_x = df_raw.drop([self.target], 1).values
         self.data_y = (df_raw[[self.target]].values - 1).astype(int)
+    
 
     def __len__(self):
         return len(self.data_x)
@@ -511,8 +516,9 @@ class Dataset_GunPoint(Dataset):
 
     def __getitem__(self, index):
         #lookback_len = 150
+        print(self.data_y[index])
         return self.data_x[index], self.data_y[index]
 
 
 def _torch(*dfs):
-    return tuple(torch.from_numpy(x).float() for x in dfs)
+    return tuple(torch.from_numpy(x).long() if x.dtype == int else torch.from_numpy(x).float() for x in dfs )

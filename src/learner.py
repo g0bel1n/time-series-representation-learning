@@ -199,7 +199,6 @@ class Learner(GetAttr):
 
     def model_forward(self):
         self("before_forward")
-        print(self.xb.shape)
         self.pred = self.model(self.xb)
         self("after_forward")
         return self.pred

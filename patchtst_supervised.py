@@ -29,6 +29,8 @@ parser.add_argument('--num_workers', type=int, default=1, help='number of worker
 parser.add_argument('--scaler', type=str, default='standard', help='scale the input data')
 parser.add_argument('--features', type=str, default='M', help='for multivariate model or univariate model')
 parser.add_argument('--use_time_features', type=int, default=0, help='whether to use time features or not')
+parser.add_argument('--classification', type=float, default=None, help='rate for labelling')
+
 # Patch
 parser.add_argument('--patch_len', type=int, default=32, help='patch length')
 parser.add_argument('--stride', type=int, default=16, help='stride between patch')

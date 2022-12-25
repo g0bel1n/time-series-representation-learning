@@ -29,7 +29,8 @@ def get_dls(params):
                 'features': params.features,
                 'scale': True,
                 'size': size,
-                'use_time_features': params.use_time_features
+                'use_time_features': params.use_time_features,
+                'classification' : params.classification
                 },
                 batch_size=params.batch_size,
                 workers=params.num_workers,

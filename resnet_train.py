@@ -67,6 +67,9 @@ parser.add_argument(
     help="for multivariate model or univariate model",
 )
 
+parser.add_argument('--classification', type=float, default=None, help='rate for labelling')
+
+
 
 args = parser.parse_args()
 print("args:", args)

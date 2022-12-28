@@ -1,5 +1,3 @@
-
-
 import numpy as np
 import pandas as pd
 import os
@@ -49,12 +47,12 @@ parser.add_argument('--n_epochs', type=int, default=20, help='number of training
 parser.add_argument('--lr', type=float, default=None, help='learning rate')
 # model id to keep track of the number of models saved
 parser.add_argument('--model_id', type=int, default=1, help='id of the saved model')
-parser.add_argument('--model_type', type=str, default='based_model', help='for multivariate model or univariate model')
 # training
 parser.add_argument('--is_train', type=int, default=1, help='training the model')
 
 
 args = parser.parse_args()
+args.model_type = args.head_type
 print('args:', args)
 args.save_model_name = 'patchtst_supervised'+'_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride)+'_epochs'+str(args.n_epochs) + '_model' + str(args.model_id)
 args.save_path = 'saved_models/' + args.dset + '/patchtst_supervised/' + args.model_type + '/'
@@ -126,9 +124,9 @@ def train_func(lr=args.lr):
 
     # define learner
     learn = Learner(dls, model, 
-                        loss_func, 
                         lr=lr, 
                         cbs=cbs,
+                        loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean'),
                         metrics=[acc] if args.head_type == 'classification' else [mse,mae]
                         )
                         

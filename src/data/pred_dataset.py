@@ -487,7 +487,7 @@ class Dataset_Pred(Dataset):
         return self.scaler.inverse_transform(data)
 
 
-class Dataset_GunPoint(Dataset):
+class MyDataset(Dataset):
 
     def __init__(self, root_path, split="train"):
         # size [seq_len, label_len, pred_len]
@@ -498,11 +498,12 @@ class Dataset_GunPoint(Dataset):
         self.set_type = type_map[split]
         self.split = split
         self.root_path = root_path
+        self.prename = self.root_path.split("/")[-1].lower().capitalize()
         self.__read_data__()
 
     def __read_data__(self):
         
-        df_raw = pd.read_csv(os.path.join(self.root_path, f"GunPoint_{self.split.upper()}.txt"), header=None, sep="\s+")
+        df_raw = pd.read_csv(os.path.join(self.root_path, f"{self.prename}_{self.split.upper()}.txt"), header=None, sep="\s+")
         df_raw = df_raw.astype('float32')
         self.target = 0
         self.data_x = df_raw.drop([self.target], 1).values
@@ -512,11 +513,8 @@ class Dataset_GunPoint(Dataset):
     def __len__(self):
         return len(self.data_x)
 
-    
-
     def __getitem__(self, index):
         #lookback_len = 150
-        print(self.data_y[index])
         return self.data_x[index], self.data_y[index]
 
 

@@ -13,7 +13,7 @@ class DataLoaders:
         workers: int=0,
         collate_fn=None,
         shuffle_train = True,
-        shuffle_val = False
+        shuffle_val = True
     ):
         super().__init__()
         self.datasetCls = datasetCls

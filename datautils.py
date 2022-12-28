@@ -6,11 +6,13 @@ import sys
 
 from src.data.datamodule import DataLoaders
 from src.data.pred_dataset import *
+__mydatasets__ = ['wine', 'gunpoint', 'computers', 'ham']
 
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
-         'traffic', 'illness', 'weather', 'exchange', 'ive', 'gunpoint'
-        ]
+         'traffic', 'illness', 'weather', 'exchange', 'ive'
+        ] + __mydatasets__
 
+shape_ds = dict(wine=234, gunpoint=150, computers=720, ham=431)
 base_path = 'data/'
 
 def get_dls(params):
@@ -190,11 +192,12 @@ def get_dls(params):
                 batch_size=params.batch_size,
                 workers=params.num_workers,
                 )
-    elif params.dset == 'gunpoint':
-        root_path = base_path + 'gunpoint/'
-        size = [150, 0, 1]
+
+    elif params.dset in __mydatasets__:
+        root_path = base_path + params.dset
+        size = [shape_ds[params.dset], 0, 2]
         dls = DataLoaders(
-                datasetCls=Dataset_GunPoint,
+                datasetCls=MyDataset,
                 dataset_kwargs={
                 'root_path': root_path
                 },
@@ -202,7 +205,7 @@ def get_dls(params):
                 workers=params.num_workers,
                 )
     
-        dls.vars, dls.len = 1, 50
+        dls.vars, dls.len = 1, params.context_points
         dls.c = dls.train.dataset[0][1].shape[0]
         return dls
 

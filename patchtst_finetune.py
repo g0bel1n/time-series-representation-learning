@@ -42,6 +42,11 @@ parser.add_argument('--d_model', type=int, default=128, help='Transformer d_mode
 parser.add_argument('--d_ff', type=int, default=256, help='Tranformer MLP dimension')
 parser.add_argument('--dropout', type=float, default=0.2, help='Transformer dropout')
 parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
+parser.add_argument('--head_type', type=str, default='prediction', help='head type')
+
+parser.add_argument('--classification', type=float, default=None, help='rate for labelling')
+
+
 # Optimization args
 parser.add_argument('--n_epochs_finetune', type=int, default=20, help='number of finetuning epochs')
 parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
@@ -54,6 +59,7 @@ parser.add_argument('--model_type', type=str, default='based_model', help='for m
 
 args = parser.parse_args()
 print('args:', args)
+args.model_type = args.head_type
 args.save_path = 'saved_models/' + args.dset_finetune + '/masked_patchtst/' + args.model_type + '/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
@@ -106,7 +112,7 @@ def find_lr(head_type):
     # weight_path = args.save_path + args.pretrained_model + '.pth'
     model = transfer_weights(args.pretrained_model, model)
     # get loss
-    loss_func = torch.nn.MSELoss(reduction='mean')
+    loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
     # get callbacks
     cbs = [RevInCB(dls.vars)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
@@ -135,12 +141,12 @@ def finetune_func(lr=args.lr):
     # get dataloader
     dls = get_dls(args)
     # get model 
-    model = get_model(dls.vars, args, head_type='prediction')
+    model = get_model(dls.vars, args, head_type=args.head_type)
     # transfer weight
     # weight_path = args.pretrained_model + '.pth'
     model = transfer_weights(args.pretrained_model, model)
     # get loss
-    loss_func = torch.nn.MSELoss(reduction='mean')   
+    loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
     # get callbacks
     cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
     cbs += [
@@ -152,7 +158,7 @@ def finetune_func(lr=args.lr):
                         loss_func, 
                         lr=lr, 
                         cbs=cbs,
-                        metrics=[mse]
+                        metrics=[acc] if args.head_type == 'classification' else [mse,mae]
                         )                            
     # fit the data to the model
     #learn.fit_one_cycle(n_epochs=args.n_epochs_finetune, lr_max=lr)
@@ -165,12 +171,12 @@ def linear_probe_func(lr=args.lr):
     # get dataloader
     dls = get_dls(args)
     # get model 
-    model = get_model(dls.vars, args, head_type='prediction')
+    model = get_model(dls.vars, args, head_type=args.head_type)
     # transfer weight
     # weight_path = args.save_path + args.pretrained_model + '.pth'
     model = transfer_weights(args.pretrained_model, model)
     # get loss
-    loss_func = torch.nn.MSELoss(reduction='mean')    
+    loss_func = torch.nn.CrossEntropyLoss(reduction='mean') if args.head_type == 'classification' else torch.nn.MSELoss(reduction='mean')
     # get callbacks
     cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
     cbs += [
@@ -182,7 +188,7 @@ def linear_probe_func(lr=args.lr):
                         loss_func, 
                         lr=lr, 
                         cbs=cbs,
-                        metrics=[mse]
+                        metrics=[acc] if args.head_type == 'classification' else [mse,mae]
                         )                            
     # fit the data to the model
     learn.linear_probe(n_epochs=args.n_epochs_finetune, base_lr=lr)
@@ -192,12 +198,12 @@ def linear_probe_func(lr=args.lr):
 def test_func(weight_path):
     # get dataloader
     dls = get_dls(args)
-    model = get_model(dls.vars, args, head_type='prediction').to('cuda')
+    model = get_model(dls.vars, args, head_type=args.head_type).to('cuda')
     # get callbacks
     cbs = [RevInCB(dls.vars, denorm=True)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
-    out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[mse,mae])         # out: a list of [pred, targ, score]
+    out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[acc] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score]
     print('score:', out[2])
     # save results
     pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_finetuned_model + '_acc.csv', float_format='%.6f', index=False)
@@ -210,7 +216,7 @@ if __name__ == '__main__':
     if args.is_finetune:
         args.dset = args.dset_finetune
         # Finetune
-        suggested_lr = find_lr(head_type='prediction')        
+        suggested_lr = find_lr(head_type=args.head_type)        
         finetune_func(suggested_lr)        
         print('finetune completed')
         # Test
@@ -220,7 +226,7 @@ if __name__ == '__main__':
     elif args.is_linear_probe:
         args.dset = args.dset_finetune
         # Finetune
-        suggested_lr = find_lr(head_type='prediction')        
+        suggested_lr = find_lr(head_type=args.head_type)        
         linear_probe_func(suggested_lr)        
         print('finetune completed')
         # Test

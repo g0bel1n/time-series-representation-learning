@@ -84,13 +84,14 @@ class ResNet(nn.Module):
         self.pred_len = pred_len
 
         if task == "classification":
-            self.fc = nn.Linear(128, pred_len)
+            self.head = nn.Linear(128*self.n_channels, pred_len)
         elif task == "regression":
-            self.fc = nn.Sequential(nn.Linear(128, pred_len), nn.Dropout(head_dropout), nn.Linear(pred_len, pred_len))
+            self.head = nn.Sequential(nn.Linear(128, pred_len), nn.Dropout(head_dropout), nn.Linear(pred_len, pred_len))
         else:
             raise ValueError("Task should be either classification or regression")
 
         self.task = task
+        self.flatten = nn.Flatten(start_dim=1)
 
     def freeze(self):
         self._freeznt(False)
@@ -108,25 +109,29 @@ class ResNet(nn.Module):
 
 
     def _one_forward(self, x):
-        chan_cat_out = torch.zeros(x.shape[0], x.shape[1], self.pred_len, device='cuda:0')
+        chan_cat_out = torch.zeros(x.shape[0], x.shape[1], 128, device='cuda:0')
         for chan in range(self.n_channels):
             out = self.block1(x[:, chan, :].unsqueeze(1))
             out = self.block2(out)
             out = self.block3(out)
             out = self.gap(out)
-            out = self.dropout(out)
-            out = self.fc(out)
             chan_cat_out[:, chan, :] = out
         return chan_cat_out
 
     def forward(self, x):
-        print(x.shape)
         x = x.permute(0, 2, 1)
         out = self._one_forward(x)
-        # if self.pred_len == 1:
-        #     out = out.squeeze(-1)
+        
         if self.task == 'classification':
+            out = self.flatten(out)
+            out = self.dropout(out)
+            out = self.head(out)
             out = F.softmax(out, dim=-1)
+            out = out.unsqueeze(1)
+        else : 
+            out = self.dropout(out)
+            out = self.head(out)
+        
         out = out.permute(0, 2, 1)
         return out
         

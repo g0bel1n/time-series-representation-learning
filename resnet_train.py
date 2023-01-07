@@ -100,7 +100,7 @@ def test_func(weight_path):
     out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[acc] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score]
     print('score:', out[2])
     # save results
-    #pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_pretrained_model + '_acc.csv', float_format='%.6f', index=False)
+    pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_pretrained_model + '_acc.csv', float_format='%.6f', index=False)
     return out
 
 def find_lr():

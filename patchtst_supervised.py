@@ -145,7 +145,9 @@ def test_func():
     cbs = [RevInCB(dls.vars)] if args.revin else []
     cbs += [PatchCB(patch_len=args.patch_len, stride=args.stride)]
     learn = Learner(dls, model,cbs=cbs)
-    out  = learn.test(dls.test, weight_path=weight_path, scores=[acc] if args.head_type == 'classification' else [mse,mae])         # out: a list of [pred, targ, score_values]
+    out  = learn.test(dls.test, weight_path=weight_path, scores=[acc] if args.head_type == 'classification' else [mse,mae])  
+    pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_model_name + '_acc.csv', float_format='%.6f', index=False)
+       # out: a list of [pred, targ, score_values]
     return out
 
 

@@ -44,7 +44,7 @@ python resnet_train.py --dset gunpoint --batch_size 8  --head_type classificatio
 ```
 
 ```
-python patchtst_supervised.py --dset gunpoint --batch_size 8 --patch_len 16 --stride 8 --head_type classification --features U --context_points 150 --target_points=2 --revin 0 --n_epochs 10  --is_train 1
+python patchtst_supervised.py --dset gunpoint --batch_size 8 --patch_len 16 --stride 8 --head_type classification --features U --context_points 150 --target_points=2 --revin 0 --n_epochs 30  --is_train 1
 ```
 
 

@@ -56,6 +56,7 @@ args.model_type = args.head_type
 print('args:', args)
 args.save_model_name = 'patchtst_supervised'+'_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride)+'_epochs'+str(args.n_epochs) + '_model' + str(args.model_id)
 args.save_path = 'saved_models/' + args.dset + '/patchtst_supervised/' + args.model_type + '/'
+print(args.save_model_name)
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
 

@@ -167,7 +167,7 @@ def get_dls(params):
                 datasetCls=Dataset_Custom,
                 dataset_kwargs={
                 'root_path': root_path,
-                'data_path': 'exchange_rate.csv',
+                'data_path': 'exchange_rate_stat.csv',
                 'features': params.features,
                 'scale': True,
                 'size': size,
